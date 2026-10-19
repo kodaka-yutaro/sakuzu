@@ -1,4 +1,4 @@
-/* 作図道場 — 問題データ
+/* SakuzuMaster — 問題データ
  * given : はじめから描かれている点・線（type: seg 線分 / ray 半直線 / line 直線 / circle 円）
  * steps : お手本。c:[中心,通る点] 円、l:[点,点] 直線、cr:[端,端,中心] 長さを写す円、
  *         p: 点に名前をつける（on:[線id,線id] の交点を pick で選ぶ / at:[x,y] 好きな点）

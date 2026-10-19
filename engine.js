@@ -1,4 +1,4 @@
-/* 作図道場 — コンパスと定規の作図エンジン
+/* SakuzuMaster — コンパスと定規の作図エンジン
  * 幾何計算（node からも使える）と、ブラウザ上の作図ボード。 */
 (function () {
   'use strict';
@@ -252,8 +252,8 @@
   }
 
   class Board {
-    constructor(el, prob, siblings) {
-      this.el = el; this.prob = prob; this.siblings = siblings || {};
+    constructor(el, prob) {
+      this.el = el; this.prob = prob;
       this.tools = prob.tools || ['circle', 'line', 'point', 'compass'];
       this.tool = this.tools[0];
       this.actions = []; this.redoStack = []; this.sel = [];
@@ -510,12 +510,15 @@
       store.set(p.slug, m);
       const cmp = m < par ? 'お手本より少ない手数です。おみごと！' : m === par ? 'お手本と同じ手数です。' : 'お手本は' + par + '手。もっと少ない手数にも挑戦してみましょう。';
       const url = location.origin + location.pathname;
-      const text = '「' + p.title + '」を' + m + '手で作図できた！ #作図道場';
+      const text = '「' + p.title + '」を' + m + '手で作図できた！ #SakuzuMaster';
       const share = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
-      const next = this.siblings.next;
-      this.doneEl.innerHTML = '<p class="sz-done-title">🎉 作図完成！ ' + m + '手</p><p>' + cmp + '</p><p class="sz-done-links">' +
+      const pr = showProgress();
+      const next = pr.nextUnsolved;
+      const total = pr.total;
+      const done = pr.ac === total ? '全' + total + '問コンプリート！ おめでとうございます。' : 'これで AC ' + pr.ac + ' / ' + total + ' 問です。';
+      this.doneEl.innerHTML = '<p class="sz-done-title">AC　' + m + '手で作図完成</p><p>' + cmp + '</p><p>' + done + '</p><p class="sz-done-links">' +
         '<a class="button" href="' + share + '" target="_blank" rel="noopener">X でシェア</a>' +
-        (next ? ' <a class="button primary" href="' + next.href + '">次の問題「' + next.title + '」へ →</a>' : '') + '</p>';
+        (next ? ' <a class="button primary" href="' + next.slug + '.html">次の未AC「' + next.title + '」へ →</a>' : ' <a class="button primary" href="../">問題一覧へ</a>') + '</p>';
       this.doneEl.hidden = false;
     }
 
@@ -673,19 +676,60 @@
     box.appendChild(s);
   }
 
+  // AC 状況（ブラウザに保存した記録）を、一覧の表・ヘッダー・問題ページの見出しに反映する
+  const parCache = {};
+  const parOf = p => (parCache[p.slug] = parCache[p.slug] || runSolution(p).moves);
+  function chip(el, m, par) {
+    el.className = 'chip' + (m == null ? '' : m <= par ? ' ac par' : ' ac');
+    el.textContent = m == null ? '未AC' : 'AC ' + m + '手' + (m <= par ? ' ★' : '');
+    el.title = m == null ? 'まだ完成していません' : m <= par ? 'お手本（' + par + '手）以下の手数で完成' : 'お手本は' + par + '手';
+  }
+  function showProgress() {
+    const list = window.SAKUZU_PROBLEMS || [], solved = store.get();
+    let ac = 0, par = 0, nextUnsolved = null;
+    const cat = {};
+    for (const p of list) {
+      const m = solved[p.slug], pp = parOf(p);
+      const c = cat[p.level] = cat[p.level] || { ac: 0, n: 0 };
+      c.n++;
+      if (m != null) { ac++; c.ac++; if (m <= pp) par++; } else if (!nextUnsolved) nextUnsolved = p;
+      document.querySelectorAll('tr[data-slug="' + p.slug + '"]').forEach(tr => {
+        tr.classList.toggle('ac', m != null);
+        chip(tr.querySelector('.chip'), m, pp);
+      });
+      document.querySelectorAll('[data-status-slug="' + p.slug + '"]').forEach(el => chip(el, m, pp));
+    }
+    const n = list.length, set = (sel, v) => document.querySelectorAll(sel).forEach(e => { e.textContent = v; });
+    set('[data-count-ac]', ac); set('[data-count-par]', par);
+    document.querySelectorAll('[data-progress-mini]').forEach(e => { e.textContent = 'AC ' + ac + ' / ' + n; e.hidden = false; });
+    document.querySelectorAll('[data-bar]').forEach(e => {
+      e.setAttribute('aria-valuenow', ac);
+      e.querySelector('.bar-ac').style.width = (100 * ac / n) + '%';
+      e.querySelector('.bar-par').style.width = (100 * par / n) + '%';
+    });
+    for (const lv in cat) {
+      set('[data-cat-count="' + lv + '"]', cat[lv].ac + ' / ' + cat[lv].n);
+      document.querySelectorAll('.category[data-cat="' + lv + '"]').forEach(sec => {
+        const full = cat[lv].ac === cat[lv].n;
+        sec.classList.toggle('complete', full);
+        sec.querySelector('.complete-badge').hidden = !full;
+      });
+    }
+    const msg = ac === n ? (par === n ? '全問をお手本以下の手数でコンプリート。SakuzuMaster です！' : '全問 AC コンプリート！ 次は全問「お手本以下の手数（★）」をめざしましょう。')
+      : ac === 0 ? 'まずは「' + nextUnsolved.title + '」から始めてみましょう。'
+      : 'コンプリートまであと ' + (n - ac) + ' 問。次は「' + nextUnsolved.title + '」に挑戦しましょう。';
+    set('[data-progress-msg]', msg);
+    return { ac, par, total: n, nextUnsolved };
+  }
+
   function init() {
     const list = window.SAKUZU_PROBLEMS || [];
     document.querySelectorAll('[data-sakuzu]').forEach(el => {
       const i = list.findIndex(p => p.slug === el.dataset.sakuzu);
       if (i < 0) return;
-      const next = list[i + 1];
-      el.sakuzuBoard = new Board(el, list[i], { next: next && { href: next.slug + '.html', title: next.title } });
+      el.sakuzuBoard = new Board(el, list[i]);
     });
-    const solved = store.get();
-    document.querySelectorAll('[data-solved-slug]').forEach(el => {
-      const m = solved[el.dataset.solvedSlug];
-      if (m) { el.textContent = '✓ ' + m + '手で完成'; el.hidden = false; }
-    });
+    showProgress();
     initComments();
   }
   window.Sakuzu = core;

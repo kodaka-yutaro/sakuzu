@@ -6,7 +6,7 @@ const PROBLEMS = require('../problems.js');
 
 const ROOT = path.join(__dirname, '..');
 const ORIGIN = 'https://sakuzu.kdking-tools.com';
-const SITE = '作図道場';
+const SITE = 'SakuzuMaster';
 const TODAY = new Date().toISOString().slice(0, 10);
 const ADSENSE = '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5667454303064752" crossorigin="anonymous"></script>';
 const LEVELS = { 1: '入門', 2: '基本', 3: '応用', 4: '挑戦' };
@@ -32,13 +32,14 @@ function page({ file, title, desc, body, ld, type }) {
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${url}">
 <meta name="twitter:card" content="summary">
-${ld ? '<script type="application/ld+json">' + JSON.stringify(ld) + '</script>\n' : ''}<link rel="stylesheet" href="${up}style.css?v=1">
+${ld ? '<script type="application/ld+json">' + JSON.stringify(ld) + '</script>\n' : ''}<link rel="stylesheet" href="${up}style.css?v=2">
 ${ADSENSE}
 </head>
 <body>
-<header class="site-header"><div class="wrap">
-  <p class="site-name"><a href="${up || './'}">${SITE}</a></p>
-  <p class="site-tag">コンパスと定規で、手を動かして解く作図問題</p>
+<header class="appbar"><div class="wrap appbar-in">
+  <a class="brand" href="${up || './'}"><span class="brand-mark" aria-hidden="true"></span>${SITE}</a>
+  <nav class="appnav" aria-label="サイト内"><a href="${up || './'}">Problems</a><a href="${up}yomimono/fukanou.html">読み物</a><a href="${up}about.html">About</a></nav>
+  <a class="appbar-ac" href="${up || './'}" data-progress-mini hidden></a>
 </div></header>
 <main class="wrap">
 ${body}
@@ -50,41 +51,6 @@ ${body}
 </body>
 </html>
 `;
-}
-
-// 一覧カード用の完成図（はじめの図形＋完成形）
-function thumb(prob) {
-  const W = 320, H = 200;
-  const b = S.bbox(prob);
-  const bw = Math.max(b.x1 - b.x0, 0.5), bh = Math.max(b.y1 - b.y0, 0.5);
-  const sc = Math.min(W / (bw * 1.3), H / (bh * 1.3));
-  const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2;
-  const X = x => +(W / 2 + (x - cx) * sc).toFixed(1), Y = y => +(H / 2 - (y - cy) * sc).toFixed(1);
-  const { scene } = S.buildGiven(prob);
-  const goal = S.computeGoal(prob)[0];
-  const out = [];
-  const far = 30;
-  const longLine = (p, ux, uy, cls) => out.push(`<line class="${cls}" x1="${X(p.x - ux * far)}" y1="${Y(p.y - uy * far)}" x2="${X(p.x + ux * far)}" y2="${Y(p.y + uy * far)}"/>`);
-  for (const c of S.runSolution(prob).scene.curves) if (!c.given) {
-    if (c.type === 'circle') out.push(`<circle class="s" cx="${X(c.c.x)}" cy="${Y(c.c.y)}" r="${(c.r * sc).toFixed(1)}"/>`);
-    else longLine(c.p, c.ux, c.uy, 's');
-  }
-  if (goal.poly) out.push(`<polygon class="af" points="${goal.poly.map(p => X(p.x) + ',' + Y(p.y)).join(' ')}"/>`);
-  for (const c of scene.curves) {
-    if (c.type === 'circle') { out.push(`<circle class="g" cx="${X(c.c.x)}" cy="${Y(c.c.y)}" r="${(c.r * sc).toFixed(1)}"/>`); continue; }
-    if (c.draw === 'line') { longLine(c.p, c.ux, c.uy, 'g'); continue; }
-    longLine(c.p, c.ux, c.uy, 'gd');
-    const e = c.draw === 'seg' ? c.eb : { x: c.ea.x + c.ux * far, y: c.ea.y + c.uy * far };
-    out.push(`<line class="g" x1="${X(c.ea.x)}" y1="${Y(c.ea.y)}" x2="${X(e.x)}" y2="${Y(e.y)}"/>`);
-  }
-  if (goal.poly) out.push(`<polygon class="a" points="${goal.poly.map(p => X(p.x) + ',' + Y(p.y)).join(' ')}"/>`);
-  else for (const [p, q] of goal.lines) { const l = S.mkLine(p, q); longLine(l.p, l.ux, l.uy, 'a'); }
-  for (const c of goal.circles) out.push(`<circle class="a" cx="${X(c.c.x)}" cy="${Y(c.c.y)}" r="${(c.r * sc).toFixed(1)}"/>`);
-  for (const p of goal.points) out.push(`<circle class="pa" cx="${X(p.x)}" cy="${Y(p.y)}" r="5"/>`);
-  for (const p of scene.points) if (p.kind === 'given') {
-    out.push(`<circle class="pt" cx="${X(p.x)}" cy="${Y(p.y)}" r="3.5"/><text x="${X(p.x) + 6}" y="${Y(p.y) - 5}">${p.label}</text>`);
-  }
-  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${esc(prob.title)}の完成図">${out.join('')}</svg>`;
 }
 
 const written = [];
@@ -105,7 +71,7 @@ PROBLEMS.forEach((p, i) => {
   const body = `<nav class="crumbs"><a href="../">問題一覧</a> › ${LEVELS[p.level]} › ${p.title}</nav>
 <article class="article">
 <h1>${p.title}の作図</h1>
-<p class="meta"><span>問題 ${i + 1} / ${PROBLEMS.length}</span><span>難しさ <span class="stars" aria-label="4段階中${p.level}">${stars(p.level)}</span> ${LEVELS[p.level]}</span><span>お手本 ${par}手</span></p>
+<p class="meta"><span class="chip" data-status-slug="${p.slug}">未AC</span><span>問題 ${i + 1} / ${PROBLEMS.length}</span><span>難しさ <span class="stars" aria-label="4段階中${p.level}">${stars(p.level)}</span> ${LEVELS[p.level]}</span><span>お手本 ${par}手</span></p>
 <p class="lead"><b>問題：</b>${p.lead}</p>
 <div data-sakuzu="${p.slug}" tabindex="-1"></div>
 <p class="muted">道具を選んで、点をタップ（クリック）して作図します。線や円の交点は自動で点になります。何もない所をドラッグすると図を動かせます。</p>
@@ -127,25 +93,42 @@ ${p.trivia ? '<h2>豆知識</h2>\n' + p.trivia.map(t => '<p>' + t + '</p>').join
 <div id="comments"></div>
 <div class="ad-slot" aria-label="広告"></div>
 </article>
-<script src="../problems.js?v=1"></script>
-<script src="../engine.js?v=2"></script>`;
+<script src="../problems.js?v=2"></script>
+<script src="../engine.js?v=3"></script>`;
   const ld = { '@context': 'https://schema.org', '@type': 'Article', headline: p.title + 'の作図', description: strip(p.lead), inLanguage: 'ja', datePublished: '2026-10-19', dateModified: TODAY, url: `${ORIGIN}/problems/${p.slug}.html`, author: { '@type': 'Person', name: 'kdking' }, publisher: { '@type': 'Organization', name: SITE } };
   write(`problems/${p.slug}.html`, page({ file: `problems/${p.slug}.html`, title, desc, body, ld }));
 });
 
 // ---- トップ（問題一覧）----
 const groups = [1, 2, 3, 4].map(lv => {
-  const cards = PROBLEMS.map((p, i) => ({ p, i })).filter(({ p }) => p.level === lv).map(({ p, i }) => `<li><a href="problems/${p.slug}.html">
-${thumb(p)}
-<div class="card-body"><h3>${i + 1}. ${p.title}</h3><p>${p.short}</p>
-<div class="card-meta"><span class="stars">${stars(p.level)}</span><span class="solved" data-solved-slug="${p.slug}" hidden></span></div></div>
-</a></li>`).join('\n');
-  return `<section class="levels"><h2>${LEVELS[lv]} <span class="stars">${stars(lv)}</span></h2>\n<ul class="cards">\n${cards}\n</ul></section>`;
+  const items = PROBLEMS.map((p, i) => ({ p, i })).filter(({ p }) => p.level === lv);
+  const rows = items.map(({ p, i }) => `<tr data-slug="${p.slug}">
+<td class="c-num">${i + 1}</td>
+<td class="c-title"><a href="problems/${p.slug}.html">${p.title}</a><span class="sub">${p.short}</span></td>
+<td class="c-lv"><span class="stars" aria-label="4段階中${p.level}">${stars(p.level)}</span></td>
+<td class="c-par">${S.runSolution(p).moves}手</td>
+<td class="c-st"><span class="chip">未AC</span></td>
+</tr>`).join('\n');
+  return `<section class="category" data-cat="${lv}">
+<h2>${LEVELS[lv]} <span class="cat-count" data-cat-count="${lv}">0 / ${items.length}</span><span class="complete-badge" hidden>COMPLETE</span></h2>
+<div class="table-scroll"><table class="plist">
+<thead><tr><th class="c-num">#</th><th class="c-title">問題</th><th class="c-lv">難しさ</th><th class="c-par">お手本</th><th class="c-st">状態</th></tr></thead>
+<tbody>
+${rows}
+</tbody></table></div>
+</section>`;
 }).join('\n');
 const topBody = `<section class="hero">
-<h1>コンパスと定規の作図道場</h1>
-<p class="lead">正三角形や垂直二等分線のような定番から、正五角形、黄金比、コンパスだけで中点を求める不思議な作図まで。画面の上でコンパスと定規を実際に動かして、作図を完成させましょう。</p>
-<p>使える道具は<b>目盛りのない定規</b>（2点を通る直線を引く）と<b>コンパス</b>（中心と通る点を決めて円をかく）だけ。線や円の交点は自動で点になります。行き詰まったら「ヒント」や「お手本を見る」で手順を1つずつ確かめられます。</p>
+<h1>Problems</h1>
+<p class="lead">コンパスと定規だけで、どこまで作図できますか。正三角形や垂直二等分線から、正五角形、黄金比、コンパスだけで中点を求める作図まで、全${PROBLEMS.length}問。画面の上で実際に作図して、AC（完成）を集めましょう。</p>
+</section>
+<section class="progress-card" aria-label="コンプリート状況">
+<div class="progress-nums">
+  <div><span class="big" data-count-ac>0</span><span class="of">/ ${PROBLEMS.length}</span><span class="lbl">AC</span></div>
+  <div><span class="big par" data-count-par>0</span><span class="of">/ ${PROBLEMS.length}</span><span class="lbl">お手本以下の手数</span></div>
+</div>
+<div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${PROBLEMS.length}" aria-valuenow="0" data-bar><span class="bar-ac"></span><span class="bar-par"></span></div>
+<p class="progress-msg" data-progress-msg>まずは「正三角形」から始めてみましょう。</p>
 </section>
 <div class="ad-slot" aria-label="広告"></div>
 ${groups}
@@ -161,11 +144,11 @@ ${groups}
 <p>このルールでは作図できないものもあります。<a href="yomimono/fukanou.html">作図できない問題（角の三等分・正七角形など）</a>もあわせて読んでみてください。</p>
 </section>
 <div class="ad-slot" aria-label="広告"></div>
-<script src="problems.js?v=1"></script>
-<script src="engine.js?v=2"></script>`;
+<script src="problems.js?v=2"></script>
+<script src="engine.js?v=3"></script>`;
 write('index.html', page({
   file: 'index.html', type: 'website',
-  title: `作図道場｜コンパスと定規の作図問題を手を動かして解く（正五角形・垂直二等分線ほか）`,
+  title: `SakuzuMaster｜コンパスと定規の作図問題を手を動かして解く（正五角形・垂直二等分線ほか）`,
   desc: 'コンパスと定規の作図問題を、画面の上で実際に作図しながら解けるサイト。正三角形・垂直二等分線・角の二等分線から、正五角形・黄金比・コンパスだけの作図まで、手順と解説つきで紹介します。',
   ld: { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE, url: ORIGIN + '/', inLanguage: 'ja' },
   body: topBody,
@@ -208,7 +191,7 @@ write('yomimono/fukanou.html', page({
 
 // ---- 運営者情報・プライバシーポリシー ----
 write('about.html', page({
-  file: 'about.html', title: `運営者情報・お問い合わせ | ${SITE}`, desc: 'コンパスと定規の作図サイト「作図道場」の運営者情報とお問い合わせ先です。',
+  file: 'about.html', title: `運営者情報・お問い合わせ | ${SITE}`, desc: 'コンパスと定規の作図サイト「SakuzuMaster」の運営者情報とお問い合わせ先です。',
   body: `<section class="box">
 <h1>運営者情報</h1>
 <p>サイト名：${SITE}<br>運営者：kdking<br>URL：<a href="${ORIGIN}/">${ORIGIN}/</a></p>
@@ -218,7 +201,7 @@ write('about.html', page({
 </section>`,
 }));
 write('privacy.html', page({
-  file: 'privacy.html', title: `プライバシーポリシー | ${SITE}`, desc: '「作図道場」のプライバシーポリシーです。',
+  file: 'privacy.html', title: `プライバシーポリシー | ${SITE}`, desc: '「SakuzuMaster」のプライバシーポリシーです。',
   body: `<section class="box">
 <h1>プライバシーポリシー</h1>
 <h2>広告の配信について</h2>

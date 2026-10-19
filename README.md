@@ -1,4 +1,4 @@
-# 作図道場
+# SakuzuMaster
 
 コンパスと定規の作図問題を、ブラウザ上で実際に作図しながら解けるサイトです（静的サイト / GitHub Pages）。
 公開先：https://sakuzu.kdking-tools.com/
