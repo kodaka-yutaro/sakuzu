@@ -88,17 +88,20 @@ h2 { font-size: 1.22rem; margin: 2em 0 .6em; padding-bottom: .25em; border-botto
 .hero h1 { font-size: 1.75rem; margin-bottom: .2em; }
 .chip { display: inline-block; font-size: .8rem; font-weight: 700; line-height: 1.5; padding: 1px 9px; border-radius: 999px; background: var(--soft); color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .chip.ac { background: var(--ac-bg); color: var(--ac); }
-.chip.ac.par { background: var(--gold-bg); color: var(--gold); }
 .progress-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; margin: 16px 0; }
 .progress-nums { display: flex; gap: 28px; flex-wrap: wrap; }
 .progress-nums .big { font-size: 2rem; font-weight: 800; color: var(--ac); font-variant-numeric: tabular-nums; }
-.progress-nums .big.par { color: var(--gold); }
 .progress-nums .of { margin: 0 6px 0 4px; color: var(--muted); font-weight: 700; }
 .progress-nums .lbl { font-size: .88rem; color: var(--muted); }
 .bar { position: relative; height: 12px; border-radius: 999px; background: var(--track); overflow: hidden; margin: 10px 0 6px; }
 .bar span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 999px; transition: width .6s ease; }
 .bar .bar-ac { background: var(--ac); width: 0; }
-.bar .bar-par { background: var(--gold); width: 0; height: 4px; top: auto; }
+.genre-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; }
+.genre-nav a { text-decoration: none; color: var(--ink); background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; font-size: .9rem; font-weight: 700; }
+.genre-nav a:hover { border-color: var(--bar); }
+.genre-nav span { color: var(--muted); font-weight: 600; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.category { scroll-margin-top: 70px; }
+.lvname { font-size: .78rem; color: var(--muted); }
 .progress-msg { margin: 4px 0 0; font-size: .92rem; }
 .category h2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .cat-count { font-size: .9rem; color: var(--muted); font-variant-numeric: tabular-nums; font-weight: 700; }
@@ -115,7 +118,6 @@ h2 { font-size: 1.22rem; margin: 2em 0 .6em; padding-bottom: .25em; border-botto
 .plist .c-title a:hover { text-decoration: underline; }
 .plist .sub { display: block; font-size: .8rem; color: var(--muted); line-height: 1.5; }
 .plist .c-lv { white-space: nowrap; }
-.plist .c-par { white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--muted); }
 .plist .c-st { width: 8.5em; }
 
 .site-footer { border-top: 1px solid var(--border); padding: 18px 0 28px; font-size: .88rem; color: var(--muted); }
@@ -128,6 +130,6 @@ h2 { font-size: 1.22rem; margin: 2em 0 .6em; padding-bottom: .25em; border-botto
   .sz-tools button span { font-size: .74rem; white-space: nowrap; }
   .appbar { position: static; }
   .appnav { order: 3; flex-basis: 100%; margin: -6px 0 4px -10px; }
-  .plist .c-lv, .plist .c-par { display: none; }
+  .plist .lvname { display: none; }
   .plist td, .plist th { padding: 8px 8px; }
 }

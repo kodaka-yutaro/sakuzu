@@ -80,7 +80,7 @@
     const ref = v => (typeof v === 'string' ? named[v] : pt(v[0], v[1]));
     for (const k in g.points || {}) {
       const p = scene.addPoint(pt(g.points[k][0], g.points[k][1]), 'given');
-      p.label = k;
+      p.label = (g.labels && g.labels[k]) || k;
       named[k] = p;
     }
     for (const c of g.curves || []) {
@@ -100,7 +100,7 @@
     return { scene, named, ids };
   }
 
-  const isFrame = s => !!(s.c || s.l || s.cr || (s.p && s.at));
+  const isFrame = s => !s.ghost && !!(s.c || s.l || s.cr || (s.p && s.at));
 
   function choose(cands, pick, named) {
     if (!pick) return cands[0];
@@ -115,7 +115,8 @@
   }
 
   // お手本の手順を upto 手目（steps の添字）の手前まで実行する
-  function runSolution(prob, upto) {
+  // ghost: 別解の目標を決めるためだけの手順（お手本には出さない）も実行する
+  function runSolution(prob, upto, ghost) {
     const { scene, named, ids } = buildGiven(prob);
     const steps = prob.steps;
     const n = upto == null ? steps.length : upto;
@@ -123,6 +124,7 @@
     const need = k => { if (!named[k]) throw new Error(prob.slug + ': 点 ' + k + ' が未定義'); return named[k]; };
     for (let i = 0; i < n; i++) {
       const st = steps[i];
+      if (st.ghost && !ghost) continue;
       if (st.c || st.l || st.cr) {
         let cv;
         if (st.c) cv = mkCircle(need(st.c[0]), dist(need(st.c[0]), need(st.c[1])));
@@ -155,15 +157,16 @@
   }
 
   function computeGoal(prob) {
-    const { named } = runSolution(prob);
+    const { named } = runSolution(prob, null, true);
     const g = prob.goal;
     const P = n => { if (!named[n]) throw new Error(prob.slug + ': 目標の点 ' + n + ' が未定義'); return pt(named[n].x, named[n].y); };
-    const base = {
+    const make = g => ({
       lines: (g.lines || []).map(([a, b]) => [P(a), P(b)]),
       points: (g.points || []).map(P),
       circles: (g.circles || []).map(([c, t]) => ({ c: P(c), r: dist(P(c), P(t)) })),
       poly: g.poly ? g.poly.map(P) : null,
-    };
+    });
+    const base = make(g);
     const variants = [base];
     if (g.mirror) {
       const m = mkLine(P(g.mirror[0]), P(g.mirror[1]));
@@ -175,6 +178,7 @@
         poly: base.poly && base.poly.map(R),
       });
     }
+    for (const a of g.alt || []) variants.push(make(a));
     return variants;
   }
 
@@ -235,10 +239,10 @@
 
   const store = {
     get() { try { return JSON.parse(localStorage.getItem('sakuzu-solved') || '{}'); } catch (e) { return {}; } },
-    set(slug, moves) {
+    set(slug, v) {
       try {
         const s = store.get();
-        if (!s[slug] || moves < s[slug]) s[slug] = moves;
+        if (s[slug] == null) s[slug] = v;
         localStorage.setItem('sakuzu-solved', JSON.stringify(s));
       } catch (e) { /* 保存できない環境では何もしない */ }
     },
@@ -260,7 +264,6 @@
       this.mode = 'play';
       this.goal = computeGoal(prob);
       this.frames = prob.steps.map((s, i) => (isFrame(s) ? i : -1)).filter(i => i >= 0);
-      this.par = runSolution(prob).moves;
       this.view = null; this.hover = null; this.solvedShown = false;
       this.build();
       this.rebuild();
@@ -498,7 +501,7 @@
     updateStatus() {
       if (!this.scene) return;
       const g = this.progress;
-      this.movesEl.innerHTML = '手数 <b>' + this.moves + '</b>　目標 <b>' + Math.max(g.done, 0) + '/' + g.total + '</b>';
+      this.movesEl.innerHTML = '目標 <b>' + Math.max(g.done, 0) + '/' + g.total + '</b>';
       this.undoBtn.disabled = !this.actions.length && !this.sel.length;
       this.redoBtn.disabled = !this.redoStack.length;
       if (!this.msgEl.classList.contains('warn')) this.msgEl.textContent = TOOLS[this.tool].help[this.sel.length] || '';
@@ -506,17 +509,15 @@
 
     showDone() {
       this.solvedShown = true;
-      const m = this.moves, par = this.par, p = this.prob;
-      store.set(p.slug, m);
-      const cmp = m < par ? 'お手本より少ない手数です。おみごと！' : m === par ? 'お手本と同じ手数です。' : 'お手本は' + par + '手。もっと少ない手数にも挑戦してみましょう。';
+      const p = this.prob;
+      store.set(p.slug, 1);
       const url = location.origin + location.pathname;
-      const text = '「' + p.title + '」を' + m + '手で作図できた！ #SakuzuMaster';
+      const text = '「' + p.title + '」の作図に成功！ #SakuzuMaster';
       const share = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(text) + '&url=' + encodeURIComponent(url);
       const pr = showProgress();
       const next = pr.nextUnsolved;
-      const total = pr.total;
-      const done = pr.ac === total ? '全' + total + '問コンプリート！ おめでとうございます。' : 'これで AC ' + pr.ac + ' / ' + total + ' 問です。';
-      this.doneEl.innerHTML = '<p class="sz-done-title">AC　' + m + '手で作図完成</p><p>' + cmp + '</p><p>' + done + '</p><p class="sz-done-links">' +
+      const done = pr.ac === pr.total ? '全' + pr.total + '問コンプリート！ おめでとうございます。' : 'これで AC ' + pr.ac + ' / ' + pr.total + ' 問です。';
+      this.doneEl.innerHTML = '<p class="sz-done-title">AC　作図完成！</p><p>' + done + '</p><p class="sz-done-links">' +
         '<a class="button" href="' + share + '" target="_blank" rel="noopener">X でシェア</a>' +
         (next ? ' <a class="button primary" href="' + next.slug + '.html">次の未AC「' + next.title + '」へ →</a>' : ' <a class="button primary" href="../">問題一覧へ</a>') + '</p>';
       this.doneEl.hidden = false;
@@ -677,49 +678,45 @@
   }
 
   // AC 状況（ブラウザに保存した記録）を、一覧の表・ヘッダー・問題ページの見出しに反映する
-  const parCache = {};
-  const parOf = p => (parCache[p.slug] = parCache[p.slug] || runSolution(p).moves);
-  function chip(el, m, par) {
-    el.className = 'chip' + (m == null ? '' : m <= par ? ' ac par' : ' ac');
-    el.textContent = m == null ? '未AC' : 'AC ' + m + '手' + (m <= par ? ' ★' : '');
-    el.title = m == null ? 'まだ完成していません' : m <= par ? 'お手本（' + par + '手）以下の手数で完成' : 'お手本は' + par + '手';
+  function chip(el, ac) {
+    el.className = 'chip' + (ac ? ' ac' : '');
+    el.textContent = ac ? 'AC' : '未AC';
   }
   function showProgress() {
     const list = window.SAKUZU_PROBLEMS || [], solved = store.get();
-    let ac = 0, par = 0, nextUnsolved = null;
+    let ac = 0, nextUnsolved = null;
     const cat = {};
     for (const p of list) {
-      const m = solved[p.slug], pp = parOf(p);
-      const c = cat[p.level] = cat[p.level] || { ac: 0, n: 0 };
+      const ok = solved[p.slug] != null;
+      const c = cat[p.genre] = cat[p.genre] || { ac: 0, n: 0 };
       c.n++;
-      if (m != null) { ac++; c.ac++; if (m <= pp) par++; } else if (!nextUnsolved) nextUnsolved = p;
+      if (ok) { ac++; c.ac++; } else if (!nextUnsolved) nextUnsolved = p;
       document.querySelectorAll('tr[data-slug="' + p.slug + '"]').forEach(tr => {
-        tr.classList.toggle('ac', m != null);
-        chip(tr.querySelector('.chip'), m, pp);
+        tr.classList.toggle('ac', ok);
+        chip(tr.querySelector('.chip'), ok);
       });
-      document.querySelectorAll('[data-status-slug="' + p.slug + '"]').forEach(el => chip(el, m, pp));
+      document.querySelectorAll('[data-status-slug="' + p.slug + '"]').forEach(el => chip(el, ok));
     }
     const n = list.length, set = (sel, v) => document.querySelectorAll(sel).forEach(e => { e.textContent = v; });
-    set('[data-count-ac]', ac); set('[data-count-par]', par);
+    set('[data-count-ac]', ac);
     document.querySelectorAll('[data-progress-mini]').forEach(e => { e.textContent = 'AC ' + ac + ' / ' + n; e.hidden = false; });
     document.querySelectorAll('[data-bar]').forEach(e => {
       e.setAttribute('aria-valuenow', ac);
       e.querySelector('.bar-ac').style.width = (100 * ac / n) + '%';
-      e.querySelector('.bar-par').style.width = (100 * par / n) + '%';
     });
-    for (const lv in cat) {
-      set('[data-cat-count="' + lv + '"]', cat[lv].ac + ' / ' + cat[lv].n);
-      document.querySelectorAll('.category[data-cat="' + lv + '"]').forEach(sec => {
-        const full = cat[lv].ac === cat[lv].n;
+    for (const g in cat) {
+      set('[data-cat-count="' + g + '"]', cat[g].ac + ' / ' + cat[g].n);
+      document.querySelectorAll('.category[data-cat="' + g + '"]').forEach(sec => {
+        const full = cat[g].ac === cat[g].n;
         sec.classList.toggle('complete', full);
         sec.querySelector('.complete-badge').hidden = !full;
       });
     }
-    const msg = ac === n ? (par === n ? '全問をお手本以下の手数でコンプリート。SakuzuMaster です！' : '全問 AC コンプリート！ 次は全問「お手本以下の手数（★）」をめざしましょう。')
+    const msg = ac === n ? '全' + n + '問コンプリート！ あなたは SakuzuMaster です。'
       : ac === 0 ? 'まずは「' + nextUnsolved.title + '」から始めてみましょう。'
       : 'コンプリートまであと ' + (n - ac) + ' 問。次は「' + nextUnsolved.title + '」に挑戦しましょう。';
     set('[data-progress-msg]', msg);
-    return { ac, par, total: n, nextUnsolved };
+    return { ac, total: n, nextUnsolved };
   }
 
   function init() {
