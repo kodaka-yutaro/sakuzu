@@ -128,7 +128,7 @@ ${p.trivia ? '<h2>豆知識</h2>\n' + p.trivia.map(t => '<p>' + t + '</p>').join
 <div class="ad-slot" aria-label="広告"></div>
 </article>
 <script src="../problems.js?v=1"></script>
-<script src="../engine.js?v=1"></script>`;
+<script src="../engine.js?v=2"></script>`;
   const ld = { '@context': 'https://schema.org', '@type': 'Article', headline: p.title + 'の作図', description: strip(p.lead), inLanguage: 'ja', datePublished: '2026-10-19', dateModified: TODAY, url: `${ORIGIN}/problems/${p.slug}.html`, author: { '@type': 'Person', name: 'kdking' }, publisher: { '@type': 'Organization', name: SITE } };
   write(`problems/${p.slug}.html`, page({ file: `problems/${p.slug}.html`, title, desc, body, ld }));
 });
@@ -162,7 +162,7 @@ ${groups}
 </section>
 <div class="ad-slot" aria-label="広告"></div>
 <script src="problems.js?v=1"></script>
-<script src="engine.js?v=1"></script>`;
+<script src="engine.js?v=2"></script>`;
 write('index.html', page({
   file: 'index.html', type: 'website',
   title: `作図道場｜コンパスと定規の作図問題を手を動かして解く（正五角形・垂直二等分線ほか）`,

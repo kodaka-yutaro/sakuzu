@@ -657,7 +657,7 @@
 
   // ---------- コメント欄（giscus） ----------
   // GitHub Discussions を有効にしたあと、repoId / categoryId を設定するとコメント欄が表示される。
-  const GISCUS = { repo: 'kodaka-yutaro/sakuzu', repoId: '', category: 'Announcements', categoryId: '' };
+  const GISCUS = { repo: 'kodaka-yutaro/sakuzu', repoId: 'R_kgDOVPxS4g', category: 'Announcements', categoryId: 'DIC_kwDOVPxS4s4DJBcT' };
   function initComments() {
     const box = document.getElementById('comments');
     if (!box) return;
