@@ -255,6 +255,66 @@
     return e;
   }
 
+
+  // ---------- 使い方（チュートリアル） ----------
+  const SV = (body) => '<svg viewBox="0 0 240 130" class="tut-fig" aria-hidden="true">' + body + '</svg>';
+  const DOT = (x, y, l, cls) => '<circle cx="' + x + '" cy="' + y + '" r="4" class="' + (cls || 'p') + '"/>' + (l ? '<text x="' + (x + 7) + '" y="' + (y - 7) + '">' + l + '</text>' : '');
+  const TAP = (x, y, n) => '<circle cx="' + x + '" cy="' + y + '" r="11" class="tap"/><text x="' + (x - 4) + '" y="' + (y + 25) + '" class="n">' + n + '</text>';
+  const TUTORIAL = [
+    { t: 'ボードの見方', fig: SV('<path d="M50 72L190 72" class="g"/><circle cx="95" cy="72" r="50" class="c"/><circle cx="145" cy="72" r="50" class="c"/>' + DOT(95, 72, 'A') + DOT(145, 72, 'B') + DOT(120, 28.7, '', 'x') + DOT(120, 115.3, '', 'x')),
+      b: ['黒い線と点は、はじめから与えられたものです。ここに<b>道具</b>で円や直線をかき足していきます。', '線と線、線と円、円と円が交わると、<b>交点が自動でできます</b>。交点は次の作図にそのまま使えます。'] },
+    { t: 'コンパス（円をかく）', fig: SV('<circle cx="100" cy="65" r="55" class="c"/>' + DOT(100, 65, 'A') + DOT(155, 65, 'B') + TAP(100, 65, '1') + TAP(155, 65, '2')),
+      b: ['① 円の中心にする点 → ② 円が通る点、の順にタップします。', '例：Aを押してからBを押すと、「Aを中心に、Bを通る円」がかけます。'] },
+    { t: '定規（直線を引く）', fig: SV('<path d="M10 115L230 20" class="l"/>' + DOT(70, 89, 'A') + DOT(170, 46, 'B') + TAP(70, 89, '1') + TAP(170, 46, '2')),
+      b: ['直線が通る2つの点を順にタップします。', '定規に目盛りはありません。2点を結ぶ直線を引くことだけができます。'] },
+    { t: '点（好きな場所に点をとる）', fig: SV('<path d="M20 90L220 90" class="g"/>' + DOT(80, 40, 'P') + DOT(160, 90, 'Q') + TAP(80, 40, '') + TAP(160, 90, '')),
+      b: ['何もない所や、線・円の上をタップすると点がとれます。線の近くをタップすると、線の上にぴったり乗ります。', '答えが「たまたまとった点」の位置に頼る作図はできません。補助に使う点だけにしましょう。'] },
+    { t: '長さを写す', fig: SV(DOT(30, 100, 'A') + DOT(90, 100, 'B') + '<path d="M30 100L90 100" class="g"/>' + '<circle cx="170" cy="65" r="60" class="c"/>' + DOT(170, 65, 'C') + TAP(30, 100, '1') + TAP(90, 100, '2') + TAP(170, 65, '3')),
+      b: ['① 長さの片方の端 → ② もう一方の端 → ③ 円の中心、の順にタップします。', 'ABの長さを半径にして、Cを中心とする円がかけます。コンパスの幅を保ったまま移す操作です。'] },
+    { t: '動かす・拡大する・やり直す', fig: SV('<rect x="20" y="20" width="200" height="90" rx="10" class="g"/><path d="M95 65h50M120 40v50" class="l"/><text x="160" y="40">ドラッグで移動</text><text x="28" y="100">ホイール・ピンチで拡大</text>'),
+      b: ['ドラッグで画面を動かし、マウスのホイールや2本指のピンチで拡大・縮小できます。右上の ＋ − ⤢ ボタンも使えます（⤢ で全体表示に戻ります）。', '「↶ 戻す」「↷ 進む」で1手ずつやり直せます（Ctrl+Z / Ctrl+Y でも可）。選び途中の点は Esc で取り消せます。'] },
+    { t: '完成（AC）の判定', fig: SV('<rect x="30" y="35" width="180" height="60" rx="12" class="ok"/><text x="80" y="72" class="big">AC 作図完成！</text>'),
+      b: ['下の「目標 0/2」が、作るべき線や点のうちいくつできたかを表します。全部そろうと AC です。', '判定は完成した図だけで決まるので、<b>お手本と違う手順（別解）でも正解</b>です。困ったら「ヒント」や「お手本を見る」を使いましょう。'] },
+  ];
+
+  function renderTutorial(box, onClose) {
+    let k = 0;
+    box.classList.add('tut');
+    const body = h('div', { class: 'tut-body' });
+    const nav = h('div', { class: 'tut-nav' });
+    const prev = h('button', { type: 'button' }, '◀ 前へ'), cnt = h('span', { class: 'tut-count' }), next = h('button', { type: 'button', class: 'primary' }, '');
+    nav.append(prev, cnt, next);
+    box.append(body, nav);
+    const show = () => {
+      const s = TUTORIAL[k];
+      body.innerHTML = '<h3>' + (k + 1) + '. ' + s.t + '</h3>' + s.fig + s.b.map(x => '<p>' + x + '</p>').join('');
+      cnt.textContent = (k + 1) + ' / ' + TUTORIAL.length;
+      prev.disabled = k === 0;
+      next.textContent = k < TUTORIAL.length - 1 ? '次へ ▶' : (onClose ? 'はじめる' : '最初に戻る');
+    };
+    prev.addEventListener('click', () => { k = Math.max(0, k - 1); show(); });
+    next.addEventListener('click', () => {
+      if (k < TUTORIAL.length - 1) { k++; show(); } else if (onClose) onClose(); else { k = 0; show(); }
+    });
+    show();
+  }
+
+  let tutDialog = null;
+  function openTutorial() {
+    if (!tutDialog) {
+      tutDialog = h('dialog', { class: 'tut-dialog', 'aria-label': '作図ボードの使い方' });
+      const close = h('button', { type: 'button', class: 'tut-close', 'aria-label': '閉じる' }, '×');
+      close.addEventListener('click', () => tutDialog.close());
+      tutDialog.addEventListener('click', e => { if (e.target === tutDialog) tutDialog.close(); });
+      const inner = h('div');
+      tutDialog.append(close, inner);
+      renderTutorial(inner, () => tutDialog.close());
+      document.body.appendChild(tutDialog);
+    }
+    try { localStorage.setItem('sakuzu-tutorial', '1'); } catch (e) {}
+    tutDialog.showModal();
+  }
+
   class Board {
     constructor(el, prob) {
       this.el = el; this.prob = prob;
@@ -300,6 +360,7 @@
       this.redoBtn = btn('↷ 進む', () => this.redo());
       this.resetBtn = btn('最初から', () => this.reset());
       btn('ヒント', () => { this.hintEl.hidden = !this.hintEl.hidden; });
+      btn('？ 使い方', () => openTutorial());
       btn('お手本を見る', () => this.startDemo(), 'primary');
       this.actBar = act;
 
@@ -719,6 +780,37 @@
     return { ac, total: n, nextUnsolved };
   }
 
+  // 問題一覧のジャンルタブ。JS が無いときは全ジャンルを縦に並べて表示する。
+  function initTabs() {
+    const bar = document.querySelector('.genre-tabs');
+    if (!bar) return;
+    const tabs = [...bar.querySelectorAll('[data-tab]')];
+    const KEY = 'sakuzu-tab';
+    document.body.classList.add('tabbed');
+    function select(id, scroll) {
+      if (!tabs.some(t => t.dataset.tab === id)) id = tabs[0].dataset.tab;
+      tabs.forEach(t => {
+        const on = t.dataset.tab === id;
+        t.classList.toggle('active', on);
+        t.setAttribute('aria-selected', on);
+        const panel = document.getElementById(t.dataset.tab);
+        if (panel) panel.hidden = !on;
+      });
+      try { localStorage.setItem(KEY, id); } catch (e) {}
+      if (scroll) bar.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+    tabs.forEach(t => t.addEventListener('click', ev => {
+      ev.preventDefault();
+      history.replaceState(null, '', '#' + t.dataset.tab);
+      select(t.dataset.tab);
+    }));
+    window.addEventListener('hashchange', () => select(location.hash.slice(1), true));
+    let saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    const fromHash = location.hash.slice(1);
+    select(fromHash || saved, !!fromHash);
+  }
+
   function init() {
     const list = window.SAKUZU_PROBLEMS || [];
     document.querySelectorAll('[data-sakuzu]').forEach(el => {
@@ -727,6 +819,15 @@
       el.sakuzuBoard = new Board(el, list[i]);
     });
     showProgress();
+    initTabs();
+    document.querySelectorAll('[data-tutorial]').forEach(el => { renderTutorial(el); try { localStorage.setItem('sakuzu-tutorial', '1'); } catch (e) {} });
+    document.querySelectorAll('[data-open-tutorial]').forEach(b => b.addEventListener('click', openTutorial));
+    // はじめて問題ページを開いたときは使い方を表示する
+    if (document.querySelector('[data-sakuzu]')) {
+      let seen = null;
+      try { seen = localStorage.getItem('sakuzu-tutorial'); } catch (e) { seen = '1'; }
+      if (!seen) openTutorial();
+    }
     initComments();
   }
   window.Sakuzu = core;

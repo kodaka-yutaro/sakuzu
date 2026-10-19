@@ -33,13 +33,13 @@ function page({ file, title, desc, body, ld, type }) {
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${url}">
 <meta name="twitter:card" content="summary">
-${ld ? '<script type="application/ld+json">' + JSON.stringify(ld) + '</script>\n' : ''}<link rel="stylesheet" href="${up}style.css?v=3">
+${ld ? '<script type="application/ld+json">' + JSON.stringify(ld) + '</script>\n' : ''}<link rel="stylesheet" href="${up}style.css?v=4">
 ${ADSENSE}
 </head>
 <body>
 <header class="appbar"><div class="wrap appbar-in">
   <a class="brand" href="${up || './'}"><span class="brand-mark" aria-hidden="true"></span>${SITE}</a>
-  <nav class="appnav" aria-label="サイト内"><a href="${up || './'}">Problems</a><a href="${up}yomimono/fukanou.html">読み物</a><a href="${up}about.html">About</a></nav>
+  <nav class="appnav" aria-label="サイト内"><a href="${up || './'}">Problems</a><a href="${up}tutorial.html">使い方</a><a href="${up}yomimono/fukanou.html">読み物</a><a href="${up}about.html">About</a></nav>
   <a class="appbar-ac" href="${up || './'}" data-progress-mini hidden></a>
 </div></header>
 <main class="wrap">
@@ -68,7 +68,7 @@ PROBLEMS.forEach((p, i) => {
   const steps = p.steps.filter(S.isFrame).map(s => '<li>' + s.say + '</li>').join('\n');
   const title = `${p.title}の作図｜手順と解説 - ${SITE}`;
   const desc = `${p.lead} コンパスと定規を実際に動かして作図に挑戦できます。手順と「なぜこれで作図できるのか」もくわしく解説します。`;
-  const body = `<nav class="crumbs"><a href="../">問題一覧</a> › ${p.genre} › ${p.title}</nav>
+  const body = `<nav class="crumbs"><a href="../">問題一覧</a> › <a href="../#g${GENRES.indexOf(p.genre) + 1}">${p.genre}</a> › ${p.title}</nav>
 <article class="article">
 <h1>${p.title}の作図</h1>
 <p class="meta"><span class="chip" data-status-slug="${p.slug}">未AC</span><span>問題 ${i + 1} / ${PROBLEMS.length}</span><span>${p.genre}</span><span>難しさ <span class="stars" aria-label="5段階中${p.level}">${stars(p.level)}</span> ${LEVELS[p.level]}</span></p>
@@ -93,8 +93,8 @@ ${p.trivia ? '<h2>豆知識</h2>\n' + p.trivia.map(t => '<p>' + t + '</p>').join
 <div id="comments"></div>
 <div class="ad-slot" aria-label="広告"></div>
 </article>
-<script src="../problems.js?v=3"></script>
-<script src="../engine.js?v=4"></script>`;
+<script src="../problems.js?v=4"></script>
+<script src="../engine.js?v=5"></script>`;
   const ld = { '@context': 'https://schema.org', '@type': 'Article', headline: p.title + 'の作図', description: strip(p.lead), inLanguage: 'ja', datePublished: '2026-10-19', dateModified: TODAY, url: `${ORIGIN}/problems/${p.slug}.html`, author: { '@type': 'Person', name: 'kdking' }, publisher: { '@type': 'Organization', name: SITE } };
   write(`problems/${p.slug}.html`, page({ file: `problems/${p.slug}.html`, title, desc, body, ld }));
 });
@@ -108,7 +108,7 @@ const groups = GENRES.map((g, gi) => {
 <td class="c-lv"><span class="stars" aria-label="5段階中${p.level}">${stars(p.level)}</span> <span class="lvname">${LEVELS[p.level]}</span></td>
 <td class="c-st"><span class="chip">未AC</span></td>
 </tr>`).join('\n');
-  return `<section class="category" data-cat="${g}" id="g${gi + 1}">
+  return `<section class="category" data-cat="${g}" id="g${gi + 1}" role="tabpanel">
 <h2>${g} <span class="cat-count" data-cat-count="${g}">0 / ${items.length}</span><span class="complete-badge" hidden>COMPLETE</span></h2>
 <div class="table-scroll"><table class="plist">
 <thead><tr><th class="c-num">#</th><th class="c-title">問題</th><th class="c-lv">難しさ</th><th class="c-st">状態</th></tr></thead>
@@ -119,7 +119,8 @@ ${rows}
 }).join('\n');
 const topBody = `<section class="hero">
 <h1>Problems</h1>
-<p class="lead">コンパスと定規だけで、どこまで作図できますか。正三角形や垂直二等分線から、正五角形、黄金比、コンパスだけで中点を求める作図まで、全${PROBLEMS.length}問。画面の上で実際に作図して、AC（完成）を集めましょう。</p>
+<p class="lead">コンパスと定規だけで、どこまで作図できますか。正三角形や垂直二等分線から、正十五角形、九点円、フェルマー点、共通接線、コンパスだけで円周を4等分する作図まで、全${PROBLEMS.length}問。画面の上で実際に作図して、AC（完成）を集めましょう。</p>
+<p><a class="button" href="tutorial.html">？ 作図ボードの使い方</a></p>
 </section>
 <section class="progress-card" aria-label="コンプリート状況">
 <div class="progress-nums">
@@ -128,9 +129,11 @@ const topBody = `<section class="hero">
 <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${PROBLEMS.length}" aria-valuenow="0" data-bar><span class="bar-ac"></span></div>
 <p class="progress-msg" data-progress-msg>まずは「正三角形」から始めてみましょう。</p>
 </section>
-<nav class="genre-nav" aria-label="ジャンル">${GENRES.map((g, gi) => `<a href="#g${gi + 1}">${g} <span data-cat-count="${g}">0 / ${PROBLEMS.filter(p => p.genre === g).length}</span></a>`).join('')}</nav>
 <div class="ad-slot" aria-label="広告"></div>
+<div class="genre-tabs" role="tablist" aria-label="ジャンル">${GENRES.map((g, gi) => `<a role="tab" href="#g${gi + 1}" data-tab="g${gi + 1}">${g}<span class="tab-count" data-cat-count="${g}">0 / ${PROBLEMS.filter(p => p.genre === g).length}</span></a>`).join('')}</div>
+<div class="tab-panels">
 ${groups}
+</div>
 <section class="box">
 <h2>作図のルール</h2>
 <p>ここでいう「作図」は、古代ギリシャ以来のルールにしたがいます。</p>
@@ -143,8 +146,8 @@ ${groups}
 <p>このルールでは作図できないものもあります。<a href="yomimono/fukanou.html">作図できない問題（角の三等分・正七角形など）</a>もあわせて読んでみてください。</p>
 </section>
 <div class="ad-slot" aria-label="広告"></div>
-<script src="problems.js?v=3"></script>
-<script src="engine.js?v=4"></script>`;
+<script src="problems.js?v=4"></script>
+<script src="engine.js?v=5"></script>`;
 write('index.html', page({
   file: 'index.html', type: 'website',
   title: `SakuzuMaster｜コンパスと定規の作図問題を手を動かして解く（正五角形・垂直二等分線ほか）`,
@@ -188,6 +191,21 @@ write('yomimono/fukanou.html', page({
 </article>`,
 }));
 
+// ---- 使い方 ----
+write('tutorial.html', page({
+  file: 'tutorial.html', title: `作図ボードの使い方 | ${SITE}`, desc: 'SakuzuMaster の作図ボードの使い方。コンパス・定規・点・長さを写す道具の操作と、完成（AC）の判定のしくみを説明します。',
+  body: `<nav class="crumbs"><a href="./">問題一覧</a> › 使い方</nav>
+<h1>作図ボードの使い方</h1>
+<p class="lead">問題ページの作図ボードは、点をタップ（クリック）して円や直線をかいていきます。各問題のボードにある「？ 使い方」ボタンからも、いつでもこの説明を開けます。</p>
+<div class="tut-page" data-tutorial></div>
+<h2>練習してみよう</h2>
+<p>いちばん最初の問題「正三角形」で試してみましょう。コンパスでAを押してからBを押すと、Aを中心にBを通る円がかけます。</p>
+<div data-sakuzu="seisankakkei"></div>
+<p><a class="button primary" href="problems/seisankakkei.html">「正三角形」の問題ページへ →</a> <a class="button" href="./">問題一覧へ</a></p>
+<script src="problems.js?v=4"></script>
+<script src="engine.js?v=5"></script>`,
+}));
+
 // ---- 運営者情報・プライバシーポリシー ----
 write('about.html', page({
   file: 'about.html', title: `運営者情報・お問い合わせ | ${SITE}`, desc: 'コンパスと定規の作図サイト「SakuzuMaster」の運営者情報とお問い合わせ先です。',
@@ -210,7 +228,7 @@ write('privacy.html', page({
 <h2>コメント欄について</h2>
 <p>各問題ページのコメント欄は、GitHub Discussions を利用した「giscus」で提供しています。コメントするには GitHub アカウントでのログインが必要で、書きこんだ内容は GitHub 上に公開されます。GitHub での個人情報の扱いは、GitHub のプライバシーポリシーにしたがいます。</p>
 <h2>データの保存について</h2>
-<p>作図を完成させた記録（問題ごとの手数）は、お使いのブラウザ内（localStorage）にのみ保存され、運営者のサーバーへ送信されることはありません。</p>
+<p>作図を完成させた記録（どの問題を AC したか）と、使い方を表示したかどうかは、お使いのブラウザ内（localStorage）にのみ保存され、運営者のサーバーへ送信されることはありません。</p>
 <h2>免責事項</h2>
 <p>当サイトの情報の正確性には注意を払っていますが、その内容を保証するものではありません。</p>
 <h2>お問い合わせ</h2>
@@ -220,7 +238,7 @@ write('privacy.html', page({
 }));
 
 // ---- sitemap.xml ----
-const order = ['index.html', ...PROBLEMS.map(p => `problems/${p.slug}.html`), 'yomimono/fukanou.html', 'about.html', 'privacy.html'];
+const order = ['index.html', ...PROBLEMS.map(p => `problems/${p.slug}.html`), 'tutorial.html', 'yomimono/fukanou.html', 'about.html', 'privacy.html'];
 const urls = order.map(f => written.find(w => w.file === f)).map(w => `  <url><loc>${ORIGIN}/${w.file.replace(/index\.html$/, '')}</loc><lastmod>${w.lastmod}</lastmod></url>`);
 fs.writeFileSync(path.join(ROOT, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`);
 console.log('生成：' + written.length + ' ページ + sitemap.xml');

@@ -74,6 +74,31 @@ h2 { font-size: 1.22rem; margin: 2em 0 .6em; padding-bottom: .25em; border-botto
 .sz-done-links { display: flex; gap: 8px; flex-wrap: wrap; }
 [hidden] { display: none !important; }
 
+/* 使い方 */
+.tut-dialog { border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px 14px; background: var(--panel); color: var(--ink); width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 32px); box-shadow: 0 20px 50px rgba(0,0,0,.3); }
+.tut-dialog::backdrop { background: rgba(10,14,20,.5); }
+.tut-close { position: absolute; right: 10px; top: 8px; border: 0; background: none; color: var(--muted); font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 4px 8px; }
+.tut h3 { margin: 0 0 8px; font-size: 1.1rem; padding-right: 28px; }
+.tut p { margin: .5em 0; }
+.tut-body { min-height: 300px; }
+.tut-fig { display: block; width: 100%; max-width: 360px; margin: 6px auto 8px; background: var(--cv-bg); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.tut-fig .g { stroke: var(--cv-given); stroke-width: 2; fill: none; }
+.tut-fig .c { stroke: var(--cv-circle); stroke-width: 2; fill: none; }
+.tut-fig .l { stroke: var(--cv-line); stroke-width: 2; fill: none; }
+.tut-fig .p { fill: var(--cv-given); }
+.tut-fig .x { fill: var(--cv-accent); }
+.tut-fig .tap { fill: none; stroke: var(--cv-accent); stroke-width: 2; stroke-dasharray: 4 3; }
+.tut-fig .ok { fill: none; stroke: var(--good); stroke-width: 2.5; }
+.tut-fig text { fill: var(--cv-label); font-size: 13px; font-weight: 700; }
+.tut-fig text.n { fill: var(--cv-accent); }
+.tut-fig text.big { fill: var(--good); font-size: 16px; }
+.tut-nav { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; }
+.tut-nav button { font: inherit; font-size: .92rem; cursor: pointer; border-radius: 9px; border: 1px solid var(--border); background: var(--panel); color: var(--ink); padding: 6px 14px; }
+.tut-nav button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 700; }
+.tut-nav button:disabled { opacity: .45; cursor: default; }
+.tut-count { color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.tut-page { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 16px 20px; margin: 16px 0; }
+
 /* 解説 */
 .article ol.steps li { margin: .3em 0; }
 .article p { margin: .7em 0; }
@@ -101,6 +126,13 @@ h2 { font-size: 1.22rem; margin: 2em 0 .6em; padding-bottom: .25em; border-botto
 .genre-nav a:hover { border-color: var(--bar); }
 .genre-nav span { color: var(--muted); font-weight: 600; margin-left: 4px; font-variant-numeric: tabular-nums; }
 .category { scroll-margin-top: 70px; }
+.genre-tabs { display: flex; gap: 2px; overflow-x: auto; border-bottom: 2px solid var(--border); margin: 18px 0 0; scroll-margin-top: 64px; scrollbar-width: thin; }
+.genre-tabs a { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--muted); font-weight: 700; font-size: .95rem; padding: 8px 14px 6px; border-bottom: 3px solid transparent; margin-bottom: -2px; line-height: 1.4; white-space: nowrap; }
+.genre-tabs a:hover { color: var(--ink); }
+.genre-tabs a.active { color: var(--bar); border-bottom-color: var(--bar); }
+.genre-tabs .tab-count { font-size: .76rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+body:not(.tabbed) .genre-tabs { display: none; }
+.tabbed .category h2 { margin-top: 14px; }
 .lvname { font-size: .78rem; color: var(--muted); }
 .progress-msg { margin: 4px 0 0; font-size: .92rem; }
 .category h2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -131,5 +163,8 @@ h2 { font-size: 1.22rem; margin: 2em 0 .6em; padding-bottom: .25em; border-botto
   .appbar { position: static; }
   .appnav { order: 3; flex-basis: 100%; margin: -6px 0 4px -10px; }
   .plist .lvname { display: none; }
+  .plist .c-num { display: none; }
+  .plist .stars { letter-spacing: 0; font-size: .78rem; }
+  .plist .c-st { width: auto; }
   .plist td, .plist th { padding: 8px 8px; }
 }
